@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="tr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Odak Zamanlayıcı</title>
+    
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>Pomodoro</h1>
+    <div class="timer-wrapper">
+        <svg width="250" height="250">
+            <circle class="bg-circle" cx="125" cy="125" r="120"></circle>
+            <circle id="progress" class="progress-circle" cx="125" cy="125" r="120"></circle>
+        </svg>
+        <div id="timer-display">25:00</div>
+    </div>
+
+    <div class="controls">
+        <button id="toggleBtn" class="btn-start">Başlat</button>
+        <button id="resetBtn" class="btn-reset">Sıfırla</button>
+    </div>
+
+    <div class="settings">
+        <div>
+            <label>Odak (dk):</label>
+            <input type="number" id="workInput" value="25" min="1">
+        </div>
+        <div>
+            <label>Mola (dk):</label>
+            <input type="number" id="breakInput" value="5" min="1">
+        </div>
+    </div>
+
+    <div class="stats">
+        <p>Tamamlanan Seans: <span id="sessionCount">0</span></p>
+    </div>
+</div>
+
+<script>
+    let timeLeft = 25 * 60;
+    let totalTime = 25 * 60;
+    let timerId = null;
+    let isWork = true;
+    let sessionCount = 0;
+
+    const display = document.getElementById('timer-display');
+    const progress = document.getElementById('progress');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const workInput = document.getElementById('workInput');
+    const breakInput = document.getElementById('breakInput');
+    const sessionDisplay = document.getElementById('sessionCount');
+
+    const circumference = 2 * Math.PI * 120;
+    progress.style.strokeDasharray = circumference;
+
+    function updateDisplay() {
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        const offset = circumference - (timeLeft / totalTime) * circumference;
+        progress.style.strokeDashoffset = offset;
+    }
+
+    function toggleTimer() {
+        if (timerId) {
+            clearInterval(timerId);
+            timerId = null;
+            toggleBtn.textContent = "Başlat";
+        } else {
+            toggleBtn.textContent = "Durdur";
+            timerId = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerId);
+                    if (isWork) {
+                        sessionCount++;
+                        sessionDisplay.textContent = sessionCount;
+                        alert("Odak seansı bitti! Biraz mola ver.");
+                        isWork = false;
+                        totalTime = breakInput.value * 60;
+                    } else {
+                        alert("Mola bitti! Tekrar odaklanma vakti.");
+                        isWork = true;
+                        totalTime = workInput.value * 60;
+                    }
+                    timeLeft = totalTime;
+                    updateDisplay();
+                    toggleBtn.textContent = "Başlat";
+                    timerId = null;
+                }
+            }, 1000);
+        }
+    }
+
+    resetBtn.addEventListener('click', () => {
+        clearInterval(timerId);
+        timerId = null;
+        isWork = true;
+        totalTime = workInput.value * 60;
+        timeLeft = totalTime;
+        toggleBtn.textContent = "Başlat";
+        updateDisplay();
+    });
+
+    workInput.addEventListener('change', () => { if (isWork) { totalTime = workInput.value * 60; timeLeft = totalTime; updateDisplay(); } });
+    toggleBtn.addEventListener('click', toggleTimer);
+
+    updateDisplay();
+</script>
+</body>
+</html>
